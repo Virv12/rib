@@ -12,15 +12,18 @@ pub fn backup(src: &Path, dst: &Path) -> Result {
 
     let _rsync = Command::new("rsync")
         .arg(src)
-        .arg(dst.join(&now_string))
+        .arg(dst.join("current"))
         .arg("--link-dest=../last")
         .arg("--archive")
         .arg("--compress")
+        .arg("--delete-excluded")
         .arg("--progress")
         .arg("--verbose")
         .arg("--filter=dir-merge .backupignore")
         .arg("--filter=:- .gitignore")
         .status()?;
+
+    std::fs::rename(dst.join("current"), dst.join(&now_string))?;
 
     let _ln = Command::new("ln")
         .arg("--force")
