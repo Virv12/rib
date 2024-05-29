@@ -27,19 +27,15 @@ pub fn backup(src: &Loc, dst: &Loc) -> Result {
         .status()?;
 
     dst.rename("current", &now_string)?;
-
-    let _ln = Command::new("ln")
-        .arg("--force")
-        .arg("--no-dereference")
-        .arg("--symbolic")
-        .arg(&now_string)
-        .arg(dst.join("last"))
-        .status()?;
+    dst.link("last", &now_string)?;
 
     log::info!("backup {} complete", now_string);
 
     let backup_list = dst.get_list()?;
     let remove_list = remove_list(backup_list, now.timestamp());
+    for backup in &remove_list {
+        log::info!("removing backup {:?}", backup);
+    }
     dst.remove_all(remove_list)?;
 
     Ok(())
