@@ -1,18 +1,18 @@
 use std::{
-    process::Command,
-    path::{Path, PathBuf},
     ffi::{OsStr, OsString},
+    path::Path,
+    process::Command,
 };
 
 type Result<T = (), E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
 
-pub fn backup(from: &Path, to: &Path) -> Result {
+pub fn backup(src: &Path, dst: &Path) -> Result {
     let now = chrono::offset::Utc::now();
     let now_string = now.to_rfc3339_opts(chrono::format::SecondsFormat::Secs, true);
 
     let _rsync = Command::new("rsync")
-        .arg(from)
-        .arg(to.join(&now_string))
+        .arg(src)
+        .arg(dst.join(&now_string))
         .arg("--link-dest=../last")
         .arg("--archive")
         .arg("--compress")
@@ -27,14 +27,14 @@ pub fn backup(from: &Path, to: &Path) -> Result {
         .arg("--no-dereference")
         .arg("--symbolic")
         .arg(&now_string)
-        .arg(to.join("last"))
+        .arg(dst.join("last"))
         .status()?;
 
-    log::debug!("backup {} complete", now_string);
+    log::info!("backup {} complete", now_string);
 
-    let backup_list = get_list(to)?;
+    let backup_list = get_list(dst)?;
     let remove_list = remove_list(backup_list, now.timestamp());
-    remove_all(to, remove_list)?;
+    remove_all(dst, remove_list)?;
 
     Ok(())
 }
@@ -51,11 +51,14 @@ fn remove_list(list: Vec<OsString>, mut now: i64) -> Vec<OsString> {
         Some(time.timestamp())
     }
 
-    let mut arr: Vec<_> = list.into_iter().filter_map(|x| try_conv(&x).zip(Some(x))).collect();
+    let mut arr: Vec<_> = list
+        .into_iter()
+        .filter_map(|x| try_conv(&x).zip(Some(x)))
+        .collect();
     arr.sort_unstable_by_key(|&(a, _)| a);
 
     while arr.last().map(|&(l, _)| l >= now) == Some(true) {
-        let backup = arr.pop().unwrap();
+        arr.pop().unwrap();
     }
 
     let mut step = -1;
@@ -69,7 +72,7 @@ fn remove_list(list: Vec<OsString>, mut now: i64) -> Vec<OsString> {
 
             now = (now - 1) & step;
 
-            if let Some(&(l, ref name)) = arr.last() {
+            if let Some(&(l, _)) = arr.last() {
                 if l >= now {
                     arr.pop();
                 }
@@ -83,10 +86,10 @@ fn remove_list(list: Vec<OsString>, mut now: i64) -> Vec<OsString> {
     res
 }
 
-fn remove_all(to: &Path, list: Vec<OsString>) -> Result<(), std::io::Error> {
+fn remove_all(dir: &Path, list: Vec<OsString>) -> Result<(), std::io::Error> {
     for name in list {
-        log::debug!("removing backup {}", name.to_str().unwrap());
-        std::fs::remove_dir_all(to.join(name))?;
+        log::info!("removing backup {}", name.to_str().unwrap());
+        std::fs::remove_dir_all(dir.join(name))?;
     }
     Ok(())
 }
