@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use clap::Parser;
 use serde::Deserialize;
 
+use rib::Loc;
+
 fn get_config_dir() -> PathBuf {
     dirs::config_dir().unwrap().join("rib.toml")
 }
@@ -20,8 +22,8 @@ struct Config {
 
 #[derive(Debug, Deserialize)]
 struct Backup {
-    src: PathBuf,
-    dst: PathBuf,
+    src: Loc,
+    dst: Loc,
 }
 
 fn main() {
