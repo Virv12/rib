@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use serde::Deserialize;
+use env_logger::Builder;
+use log::LevelFilter;
 
 use rib::Loc;
 
@@ -27,7 +29,10 @@ struct Backup {
 }
 
 fn main() {
-    env_logger::init();
+    Builder::new()
+        .filter_level(LevelFilter::Info)
+        .parse_default_env()
+        .init();
 
     let args = Args::parse();
 
