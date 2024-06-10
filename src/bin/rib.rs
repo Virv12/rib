@@ -26,6 +26,8 @@ struct Config {
 struct Backup {
     src: Loc,
     dst: Loc,
+    #[serde(default)]
+    one_file_system: bool,
 }
 
 fn main() {
@@ -40,6 +42,6 @@ fn main() {
     let conf: Config = toml::from_str(std::str::from_utf8(&conf).unwrap()).unwrap();
 
     for backup in conf.backup {
-        rib::backup(&backup.src, &backup.dst).unwrap();
+        rib::backup(&backup.src, &backup.dst, backup.one_file_system).unwrap();
     }
 }

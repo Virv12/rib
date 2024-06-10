@@ -9,12 +9,12 @@ pub use loc::Loc;
 
 type Result<T = (), E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
 
-pub fn backup(src: &Loc, dst: &Loc) -> Result {
+pub fn backup(src: &Loc, dst: &Loc, one_file_system: bool) -> Result {
     let now = chrono::offset::Utc::now();
     let now_string = now.to_rfc3339_opts(chrono::format::SecondsFormat::Secs, true);
 
-    let _rsync = Command::new("rsync")
-        .arg(src)
+    let mut cmd = Command::new("rsync");
+    cmd.arg(src)
         .arg(dst.join("current"))
         .arg("--link-dest=../last")
         .arg("--archive")
@@ -23,8 +23,11 @@ pub fn backup(src: &Loc, dst: &Loc) -> Result {
         .arg("--progress")
         .arg("--verbose")
         .arg("--filter=dir-merge .backupignore")
-        .arg("--filter=:- .gitignore")
-        .status()?;
+        .arg("--filter=:- .gitignore");
+    if one_file_system {
+        cmd.arg("--one-file-system");
+    }
+    let _rsync = cmd.status()?;
 
     dst.rename("current", &now_string)?;
     dst.link("last", &now_string)?;
