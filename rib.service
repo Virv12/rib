@@ -1,0 +1,10 @@
+[Unit]
+Description=rsync incremental backup
+#Requires=network-online.target
+#After=network-online.target
+
+[Service]
+ExecStart=%h/.cargo/bin/rib
+
+[Install]
+WantedBy=default.target
