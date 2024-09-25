@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use serde::Deserialize;
 use env_logger::Builder;
 use log::LevelFilter;
+use serde::Deserialize;
 
 use rib::Loc;
 
@@ -19,6 +19,8 @@ struct Args {
 
 #[derive(Debug, Deserialize)]
 struct Config {
+    #[serde(default)]
+    extra_args: Vec<String>,
     backup: Vec<Backup>,
 }
 
@@ -42,6 +44,12 @@ fn main() {
     let conf: Config = toml::from_str(std::str::from_utf8(&conf).unwrap()).unwrap();
 
     for backup in conf.backup {
-        rib::backup(&backup.src, &backup.dst, backup.one_file_system).unwrap();
+        rib::backup(
+            &backup.src,
+            &backup.dst,
+            backup.one_file_system,
+            &conf.extra_args,
+        )
+        .unwrap();
     }
 }

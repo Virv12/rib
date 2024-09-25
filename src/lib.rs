@@ -9,7 +9,7 @@ pub use loc::Loc;
 
 type Result<T = (), E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
 
-pub fn backup(src: &Loc, dst: &Loc, one_file_system: bool) -> Result {
+pub fn backup(src: &Loc, dst: &Loc, one_file_system: bool, extra_args: &[String]) -> Result {
     let now = chrono::offset::Utc::now();
     let now_string = now.to_rfc3339_opts(chrono::format::SecondsFormat::Secs, true);
 
@@ -19,14 +19,11 @@ pub fn backup(src: &Loc, dst: &Loc, one_file_system: bool) -> Result {
         .arg("--link-dest=../last")
         .arg("--archive")
         .arg("--compress")
-        .arg("--delete-excluded")
-        .arg("--progress")
-        .arg("--verbose")
-        .arg("--filter=dir-merge .backupignore")
-        .arg("--filter=:- .gitignore");
+        .arg("--delete-excluded");
     if one_file_system {
         cmd.arg("--one-file-system");
     }
+    cmd.args(extra_args);
     let _rsync = cmd.status()?;
 
     dst.rename("current", &now_string)?;
