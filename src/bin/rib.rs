@@ -5,31 +5,36 @@ use env_logger::Builder;
 use log::LevelFilter;
 use serde::Deserialize;
 
-use rib::Loc;
-
-fn get_config_dir() -> PathBuf {
-    dirs::config_dir().unwrap().join("rib.toml")
+#[derive(Debug, Parser)]
+enum Args {
+    //#[clap(short, long, default_value_os_t = get_config_dir())]
+    //config: PathBuf,
+    //#[command(subcommand)]
+    //backup: Option<Backup>,
+    Config(ConfigArgs),
+    Backup(Backup),
 }
 
 #[derive(Debug, Parser)]
-struct Args {
-    #[clap(short, long, default_value_os_t = get_config_dir())]
+struct ConfigArgs {
     config: PathBuf,
 }
 
 #[derive(Debug, Deserialize)]
 struct Config {
-    #[serde(default)]
-    extra_args: Vec<String>,
     backup: Vec<Backup>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Parser)]
 struct Backup {
-    src: Loc,
-    dst: Loc,
+    src: String,
+    dst: String,
     #[serde(default)]
+    #[clap(long)]
     one_file_system: bool,
+    #[serde(default)]
+    #[clap(long)]
+    extra_args: Vec<String>,
 }
 
 fn main() {
@@ -40,15 +45,21 @@ fn main() {
 
     let args = Args::parse();
 
-    let conf = std::fs::read(args.config).unwrap();
-    let conf: Config = toml::from_str(std::str::from_utf8(&conf).unwrap()).unwrap();
+    let backups = match args {
+        Args::Config(ConfigArgs { config }) => {
+            let conf = std::fs::read(config).unwrap();
+            let conf: Config = toml::from_str(std::str::from_utf8(&conf).unwrap()).unwrap();
+            conf.backup
+        }
+        Args::Backup(backup) => vec![backup],
+    };
 
-    for backup in conf.backup {
+    for backup in backups {
         let res = rib::backup(
-            &backup.src,
-            &backup.dst,
+            &backup.src.parse().unwrap(),
+            &backup.dst.parse().unwrap(),
             backup.one_file_system,
-            &conf.extra_args,
+            &backup.extra_args,
         );
         if let Err(e) = res {
             log::error!("Backup failed: {}", e);

@@ -2,9 +2,8 @@ use std::{
     ffi::{OsStr, OsString},
     path::Path,
     process::Command,
+    str::FromStr,
 };
-
-use serde::{de::Deserialize, Deserializer};
 
 #[derive(Debug)]
 pub enum Loc {
@@ -134,12 +133,10 @@ impl AsRef<OsStr> for Loc {
     }
 }
 
-impl<'de> Deserialize<'de> for Loc {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let path = String::deserialize(deserializer)?;
+impl FromStr for Loc {
+    type Err = std::io::Error;
+
+    fn from_str(path: &str) -> Result<Self, Self::Err> {
         let maybe_colon =
             path.find(|c: char| !c.is_ascii_alphanumeric() && c != '-' && c != '.' && c != '@');
         if let Some(colon) = maybe_colon {
