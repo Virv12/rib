@@ -44,12 +44,14 @@ fn main() {
     let conf: Config = toml::from_str(std::str::from_utf8(&conf).unwrap()).unwrap();
 
     for backup in conf.backup {
-        rib::backup(
+        let res = rib::backup(
             &backup.src,
             &backup.dst,
             backup.one_file_system,
             &conf.extra_args,
-        )
-        .unwrap();
+        );
+        if let Err(e) = res {
+            log::error!("Backup failed: {}", e);
+        }
     }
 }

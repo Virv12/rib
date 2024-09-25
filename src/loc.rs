@@ -140,7 +140,8 @@ impl<'de> Deserialize<'de> for Loc {
         D: Deserializer<'de>,
     {
         let path = String::deserialize(deserializer)?;
-        let maybe_colon = path.find(|c: char| !c.is_ascii_alphanumeric() && c != '-' && c != '.' && c != '@');
+        let maybe_colon =
+            path.find(|c: char| !c.is_ascii_alphanumeric() && c != '-' && c != '.' && c != '@');
         if let Some(colon) = maybe_colon {
             if path.as_bytes()[colon] == b':' {
                 return Ok(Loc::Ssh {
