@@ -4,7 +4,7 @@ Description=rsync incremental backup
 #After=network-online.target
 
 [Service]
-ExecStart=%h/.cargo/bin/rib
+ExecStart=%h/.cargo/bin/rib config %h/.config/rib.toml
 
 [Install]
 WantedBy=default.target

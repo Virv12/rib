@@ -24,7 +24,10 @@ pub fn backup(src: &Loc, dst: &Loc, one_file_system: bool, extra_args: &[String]
         cmd.arg("--one-file-system");
     }
     cmd.args(extra_args);
-    let _rsync = cmd.status()?;
+    let rsync = cmd.status()?;
+    if !rsync.success() {
+        return Err("rsync failed".into());
+    }
 
     dst.rename("current", &now_string)?;
     dst.link("last", &now_string)?;
