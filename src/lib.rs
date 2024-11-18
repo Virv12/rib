@@ -5,12 +5,18 @@ use std::{
 
 mod loc;
 
+use chrono::{DateTime, Utc};
 pub use loc::Loc;
 
 type Result<T = (), E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
 
-pub fn backup(src: &Loc, dst: &Loc, one_file_system: bool, extra_args: &[String]) -> Result {
-    let now = chrono::offset::Utc::now();
+pub fn backup(
+    src: &Loc,
+    dst: &Loc,
+    one_file_system: bool,
+    extra_args: &[String],
+    now: DateTime<Utc>,
+) -> Result {
     let now_string = now.to_rfc3339_opts(chrono::format::SecondsFormat::Secs, true);
 
     let mut cmd = Command::new("rsync");
@@ -33,14 +39,16 @@ pub fn backup(src: &Loc, dst: &Loc, one_file_system: bool, extra_args: &[String]
     dst.link("last", &now_string)?;
 
     log::info!("backup {} complete", now_string);
+    Ok(())
+}
 
+pub fn cleanup(dst: &Loc, now: DateTime<Utc>) -> Result {
     let backup_list = dst.get_list()?;
     let remove_list = remove_list(backup_list, now.timestamp());
     for backup in &remove_list {
         log::info!("removing backup {:?}", backup);
     }
     dst.remove_all(remove_list)?;
-
     Ok(())
 }
 

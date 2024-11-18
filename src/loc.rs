@@ -1,4 +1,5 @@
 use std::{
+    convert::Infallible,
     ffi::{OsStr, OsString},
     path::Path,
     process::Command,
@@ -134,7 +135,7 @@ impl AsRef<OsStr> for Loc {
 }
 
 impl FromStr for Loc {
-    type Err = std::io::Error;
+    type Err = Infallible;
 
     fn from_str(path: &str) -> Result<Self, Self::Err> {
         let maybe_colon =
